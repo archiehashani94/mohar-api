@@ -1,0 +1,18 @@
+[profile.default]
+src = "src"
+out = "out"
+test = "test"
+script = "script"
+libs = ["lib"]
+solc_version = "0.8.27"
+optimizer = true
+optimizer_runs = 1
+via_ir = false
+evm_version = "cancun"
+fs_permissions = [{ access = "read-write", path = "./" }, { access = "read", path = "../circuits" }]
+
+[profile.default.fuzz]
+runs = 64
+
+[lint]
+lint_on_build = false
