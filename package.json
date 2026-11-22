@@ -1,0 +1,10 @@
+{
+  "name": "kavach",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "circuit": "cd circuits/claim && nargo compile && node ../../sdk/scripts/write-verifier.mjs",
+    "test:contracts": "cd contracts && forge test",
+    "test:sdk": "pnpm --filter @kavach/sdk test"
+  }
+}

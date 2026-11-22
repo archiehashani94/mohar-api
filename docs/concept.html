@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kavach — Idea</title>
+<style>
+:root{
+  --bg:#0b0d12; --panel:#12151d; --panel2:#181c26; --line:#262b38;
+  --text:#e8eaf0; --muted:#9aa2b4; --accent:#7c5cff; --accent2:#22d3a6;
+  --red:#ff5d6c; --amber:#ffb547; --green:#22d3a6; --blue:#4da3ff;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f7f7fb; --panel:#ffffff; --panel2:#f1f2f7; --line:#e1e3ec;
+    --text:#151824; --muted:#5b6275; --accent:#5b3df5; --accent2:#0e9f7a;
+    --red:#d93848; --amber:#c27a00; --green:#0e9f7a; --blue:#1f6fd1;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px}
+header{padding:72px 0 48px;border-bottom:1px solid var(--line);background:radial-gradient(800px 300px at 20% 0%,color-mix(in srgb,var(--accent) 22%,transparent),transparent)}
+.tag{display:inline-block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);padding:4px 10px;border-radius:99px}
+h1{font-size:clamp(44px,8vw,84px);line-height:1;margin:18px 0 10px;letter-spacing:-.03em}
+h1 span{color:var(--accent)}
+.sub{font-size:clamp(18px,2.6vw,24px);color:var(--muted);max-width:720px;margin:0}
+h2{font-size:28px;margin:0 0 6px;letter-spacing:-.01em}
+h3{margin:0 0 6px;font-size:18px}
+section{padding:56px 0;border-bottom:1px solid var(--line)}
+.kicker{color:var(--accent);font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.lead{color:var(--muted);max-width:760px;margin:0 0 24px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+.card p{margin:6px 0 0;color:var(--muted)}
+.card ul{margin:8px 0 0;padding-left:18px;color:var(--muted)}
+.card li{margin:4px 0}
+.big{font-size:40px;font-weight:800;letter-spacing:-.02em;line-height:1}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;margin-right:4px}
+.p-red{background:color-mix(in srgb,var(--red) 18%,transparent);color:var(--red)}
+.p-green{background:color-mix(in srgb,var(--green) 18%,transparent);color:var(--green)}
+.p-blue{background:color-mix(in srgb,var(--blue) 18%,transparent);color:var(--blue)}
+.p-amber{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber)}
+.p-violet{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}
+.callout{background:linear-gradient(135deg,color-mix(in srgb,var(--red) 14%,var(--panel)),var(--panel));border:1px solid color-mix(in srgb,var(--red) 40%,var(--line));border-radius:16px;padding:24px}
+.callout.good{background:linear-gradient(135deg,color-mix(in srgb,var(--green) 14%,var(--panel)),var(--panel));border-color:color-mix(in srgb,var(--green) 40%,var(--line))}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.06em}
+.tbl{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow-x:auto}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;background:var(--panel2);padding:1px 6px;border-radius:6px}
+.flow svg{width:100%;height:auto;display:block}
+.step{display:flex;gap:14px;align-items:flex-start;margin:0 0 14px}
+.num{flex:0 0 auto;min-width:34px;height:34px;padding:0 8px;border-radius:99px;font-size:13px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700}
+.step p{margin:2px 0 0;color:var(--muted)}
+blockquote{margin:0;font-size:clamp(22px,3.4vw,32px);line-height:1.3;font-weight:700;letter-spacing:-.01em}
+blockquote small{display:block;margin-top:12px;font-size:15px;color:var(--muted);font-weight:400}
+.mod-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:18px;background:var(--panel2);border:1px solid var(--line)}
+.check td:first-child{white-space:nowrap}
+footer{padding:40px 0 80px;color:var(--muted);font-size:14px}
+.svg-text{fill:var(--text);font:600 13px system-ui,sans-serif}
+.svg-muted{fill:var(--muted);font:12px system-ui,sans-serif}
+.svg-box{fill:var(--panel);stroke:var(--line);stroke-width:1.5}
+.svg-acc{fill:color-mix(in srgb,var(--accent) 16%,var(--panel));stroke:var(--accent);stroke-width:1.5}
+.svg-grn{fill:color-mix(in srgb,var(--green) 16%,var(--panel));stroke:var(--green);stroke-width:1.5}
+.svg-line{stroke:var(--muted);stroke-width:1.5;fill:none}
+.svg-zone{fill:none;stroke:var(--line);stroke-dasharray:5 5;stroke-width:1.5}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <span class="tag">Hackasol 5.0 · Track 4 · W3-01</span>
+    <h1>Kavach <span>कवच</span></h1>
+    <p class="sub">Insurers pay. Diagnoses stay sealed.<br>Cashless health claims settled in under a minute. The insurer never learns what was wrong with you, and the payment doesn't give it away either.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- PROBLEM -->
+<section>
+  <div class="kicker">The problem</div>
+  <h2>To get paid, you hand over your medical history</h2>
+  <p class="lead">Today, a hospital that wants an insurer to settle a cashless claim sends the diagnosis, discharge summary, prescriptions and bills. Then a person at the insurer reads all of it and decides by hand.</p>
+  <div class="grid g3">
+    <div class="card"><div class="big" style="color:var(--red)">Privacy</div><p>Your diagnosis, mental-health history and reproductive care all end up in an insurer's database you have no control over.</p></div>
+    <div class="card"><div class="big" style="color:var(--amber)">Hours</div><p>The insurance regulator (IRDAI) requires a cashless claim to be approved within 3 hours of the discharge request. Patients still wait at the billing desk for half a day.</p></div>
+    <div class="card"><div class="big" style="color:var(--blue)">Fraud</div><p>Fake hospitals, claims for patients who were never treated, the same claim filed twice, and big bills split up to slip under limits.</p></div>
+  </div>
+</section>
+
+<!-- THE LEAK -->
+<section>
+  <div class="kicker">The insight that sets Kavach apart</div>
+  <h2>Most ZK claim systems still leak the diagnosis</h2>
+  <p class="lead">A typical submission proves the claim is valid without revealing the diagnosis, then has the smart contract pay the hospital's public wallet. That's where the privacy breaks.</p>
+  <div class="callout">
+    <h3>The payment is the leak</h3>
+    <p style="margin:6px 0 0;color:var(--muted)">If the money lands in the public wallet of a <b>cancer centre</b>, an <b>IVF clinic</b>, an <b>HIV clinic</b> or a <b>psychiatric hospital</b>, anyone reading the chain can work out the diagnosis. The ZK proof hid it, then the payment revealed it.</p>
+  </div>
+  <div style="height:14px"></div>
+  <div class="callout good">
+    <h3>Kavach closes it: Ghost Pay on Zcash</h3>
+    <p style="margin:6px 0 0;color:var(--muted)">The proof is checked on an EVM smart contract, but the payout goes to the hospital's <b>Zcash shielded address</b>, with the claim's ID in the encrypted memo. The amount the insurer agreed to is public; who received it is not. It stays private from the hospital's computer all the way to the payout.</p>
+  </div>
+</section>
+
+<!-- FLOW -->
+<section>
+  <div class="kicker">How it works</div>
+  <h2>One claim, start to finish</h2>
+  <p class="lead">Everything inside the dashed box stays on the hospital's computer. Only a proof and a few public numbers ever leave it.</p>
+  <div class="card flow">
+    <svg viewBox="0 0 900 360" role="img" aria-label="Claim flow diagram">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor" style="color:var(--muted)"/></marker></defs>
+      <rect class="svg-zone" x="10" y="20" width="370" height="200" rx="14"/>
+      <text class="svg-muted" x="24" y="42">PRIVATE, never leaves the hospital machine</text>
+
+      <rect class="svg-box" x="30" y="62" width="150" height="62" rx="10"/>
+      <text class="svg-text" x="105" y="88" text-anchor="middle">🧑 Patient</text>
+      <text class="svg-muted" x="105" y="108" text-anchor="middle">scans QR · signs consent</text>
+
+      <rect class="svg-acc" x="210" y="62" width="150" height="62" rx="10"/>
+      <text class="svg-text" x="285" y="88" text-anchor="middle">🏥 Hospital (Seal)</text>
+      <text class="svg-muted" x="285" y="108" text-anchor="middle">diagnosis · bill · record</text>
+
+      <rect class="svg-acc" x="120" y="148" width="180" height="56" rx="10"/>
+      <text class="svg-text" x="210" y="172" text-anchor="middle">🔐 ZK proof in browser</text>
+      <text class="svg-muted" x="210" y="190" text-anchor="middle">Noir · ~seconds</text>
+
+      <path class="svg-line" d="M180 93 H208" marker-end="url(#ar)"/>
+      <path class="svg-line" d="M285 124 V146" marker-end="url(#ar)"/>
+      <path class="svg-line" d="M105 124 C105 160 110 176 118 176" marker-end="url(#ar)"/>
+
+      <rect class="svg-box" x="470" y="130" width="190" height="90" rx="10"/>
+      <text class="svg-text" x="565" y="156" text-anchor="middle">⛓ Smart contract</text>
+      <text class="svg-muted" x="565" y="176" text-anchor="middle">verify proof</text>
+      <text class="svg-muted" x="565" y="194" text-anchor="middle">check nullifier · limit · date</text>
+      <path class="svg-line" d="M300 176 H468" marker-end="url(#ar)"/>
+      <text class="svg-muted" x="384" y="168" text-anchor="middle">proof + public inputs</text>
+
+      <rect class="svg-box" x="720" y="40" width="160" height="70" rx="10"/>
+      <text class="svg-text" x="800" y="68" text-anchor="middle">👁 Insurer (Blind Desk)</text>
+      <text class="svg-muted" x="800" y="88" text-anchor="middle">₹ amount + ✅✅✅</text>
+      <path class="svg-line" d="M660 150 C700 130 700 100 718 90" marker-end="url(#ar)"/>
+
+      <rect class="svg-grn" x="720" y="240" width="160" height="70" rx="10"/>
+      <text class="svg-text" x="800" y="268" text-anchor="middle">👻 Ghost Pay</text>
+      <text class="svg-muted" x="800" y="288" text-anchor="middle">Zcash shielded payout</text>
+      <path class="svg-line" d="M660 200 C700 220 700 260 718 270" marker-end="url(#ar)"/>
+
+      <rect class="svg-box" x="470" y="262" width="190" height="62" rx="10"/>
+      <text class="svg-text" x="565" y="288" text-anchor="middle">📦 IPFS (encrypted)</text>
+      <text class="svg-muted" x="565" y="306" text-anchor="middle">records · hash on-chain</text>
+      <path class="svg-line" d="M285 220 C285 300 400 293 468 293" marker-end="url(#ar)"/>
+    </svg>
+  </div>
+
+  <div style="height:22px"></div>
+  <div class="step"><div class="num">1</div><div><h3>Patient consents</h3><p>At discharge the patient scans a QR code in the Vault app and signs the claim. Without that signature, the proof can't be generated.</p></div></div>
+  <div class="step"><div class="num">2</div><div><h3>Hospital generates the proof locally</h3><p>The Seal desk builds a zero-knowledge proof in the browser from the diagnosis, procedure code, policy details and the hospital's secret key. None of that data is uploaded.</p></div></div>
+  <div class="step"><div class="num">3</div><div><h3>Contract verifies</h3><p>The proof plus a few public numbers go on-chain. The contract checks the proof, checks the claim's nullifier hasn't been used (blocking replays), checks the remaining policy limit and checks the date.</p></div></div>
+  <div class="step"><div class="num">4</div><div><h3>Insurer sees only checkmarks</h3><p>The Blind Desk shows the amount and five green checks. Nobody at the insurer approves anything; the payment goes out on its own.</p></div></div>
+  <div class="step"><div class="num">5</div><div><h3>Paid privately</h3><p>Ghost Pay sends the money to the hospital's Zcash shielded address. Nobody watching the chain can tell which hospital was paid.</p></div></div>
+</section>
+
+<!-- MODULES -->
+<section>
+  <div class="kicker">The product</div>
+  <h2>Five parts</h2>
+  <p class="lead">Three dashboards (one per role), a private payout layer, and a live demo that shows attacks failing.</p>
+  <div class="grid g2">
+    <div class="card">
+      <div class="mod-head"><div class="icon">🗝</div><h3>Vault <span class="pill p-violet">Patient</span></h3></div>
+      <ul>
+        <li>Health records encrypted and stored on IPFS in FHIR format; only the hash goes on-chain</li>
+        <li>Grant a doctor access with a timer (e.g. 24h); revoke anytime</li>
+        <li>Every view and change is logged on-chain</li>
+        <li><b>Break-glass:</b> 2 of your 3 chosen guardians can unlock records in an emergency, logged loudly, and you're notified</li>
+        <li>Approve claims by scanning a QR code</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="mod-head"><div class="icon">🏥</div><h3>Seal <span class="pill p-blue">Hospital</span></h3></div>
+      <ul>
+        <li>Fill in the claim: procedure, amount, policy</li>
+        <li>Generates the proof <b>in the browser</b>, with a live timer</li>
+        <li>Hospital proves it's licensed by using its secret key, so it can't pretend to be another hospital</li>
+        <li>Requests access to a patient's records from the patient</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="mod-head"><div class="icon">👁</div><h3>Blind Desk <span class="pill p-amber">Insurer</span></h3></div>
+      <ul>
+        <li>Issues policies: only a fingerprint (commitment) of each policy goes on-chain</li>
+        <li>Updates the list of approved hospitals (published as a Merkle root)</li>
+        <li>A claims feed showing only the amount and green checks</li>
+        <li>Funds the payout pool; claims settle automatically</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="mod-head"><div class="icon">👻</div><h3>Ghost Pay <span class="pill p-green">Zcash</span></h3></div>
+      <ul>
+        <li>When the contract emits <code>ClaimApproved</code>, the payout goes to the hospital's Zcash shielded address</li>
+        <li>The claim's nullifier goes in the encrypted memo, so the hospital can match payment to claim</li>
+        <li>Fallback: one-time stealth addresses on the EVM chain (ERC-5564)</li>
+      </ul>
+    </div>
+    <div class="card" style="grid-column:1/-1">
+      <div class="mod-head"><div class="icon">🧪</div><h3>Attack Lab + X-Ray <span class="pill p-red">Demo</span></h3></div>
+      <p><b>Attack Lab:</b> one-click buttons that try to cheat the system, live. Each attempt fails in red on-screen.<br><b>X-Ray:</b> a split screen of "what the hospital knows" vs "what the insurer and the chain see." It's the threat model as a live screen, not just a slide.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ZK PROOF -->
+<section>
+  <div class="kicker">The zero-knowledge proof</div>
+  <h2>What the hospital proves without revealing anything</h2>
+  <p class="lead">One Noir circuit. The insurer learns that all seven statements are true and nothing else.</p>
+  <div class="tbl">
+    <table>
+      <tr><th>#</th><th>Statement proven</th><th>How</th><th>Required by</th></tr>
+      <tr><td>1</td><td>The hospital is on the approved list</td><td>Merkle membership proof plus proof it holds the hospital's secret key</td><td><span class="pill p-green">must-have</span></td></tr>
+      <tr><td>2</td><td>The policy is active</td><td>Opens the policy commitment, checks <code>expiry &gt; claimDate</code></td><td><span class="pill p-green">must-have</span></td></tr>
+      <tr><td>3</td><td>The procedure is covered</td><td>Merkle proof that the procedure code is in the policy's covered list</td><td><span class="pill p-green">must-have</span></td></tr>
+      <tr><td>4</td><td>The amount is within the limit</td><td><code>amount ≤ limit − alreadyUsed</code></td><td><span class="pill p-green">must-have</span> <span class="pill p-violet">+ stops claim splitting</span></td></tr>
+      <tr><td>5</td><td>The claim isn't a duplicate</td><td><code>nullifier = H(record, policy, procedure)</code>, stored by the contract</td><td><span class="pill p-green">must-have</span></td></tr>
+      <tr><td>6</td><td>The claim matches a real record</td><td>Record hash matches the patient's on-chain record</td><td><span class="pill p-violet">extra</span></td></tr>
+      <tr><td>7</td><td>The patient approved it</td><td>Patient's signature on the claim is checked inside the circuit</td><td><span class="pill p-violet">extra: stops fake claims</span></td></tr>
+    </table>
+  </div>
+  <div style="height:18px"></div>
+  <div class="grid g2">
+    <div class="card"><h3>🌍 Public (on-chain)</h3><p>Claim amount · policy commitment · claim nullifier · approved-hospital root · claim date · limit already used</p></div>
+    <div class="card"><h3>🔒 Private (never revealed)</h3><p>Diagnosis · procedure code · prescriptions · treatment history · record contents · which hospital · patient identity</p></div>
+  </div>
+</section>
+
+<!-- ATTACK LAB -->
+<section>
+  <div class="kicker">Attack Lab</div>
+  <h2>Seven ways to cheat, all blocked live on stage</h2>
+  <p class="lead">Judges see the security hold rather than taking our word for it.</p>
+  <div class="tbl">
+    <table>
+      <tr><th>Attack</th><th>What the attacker tries</th><th>Result</th></tr>
+      <tr><td>🔁 Replay</td><td>Submit the same approved claim again</td><td><span class="pill p-red">Rejected</span> nullifier already used</td></tr>
+      <tr><td>🏚 Fake hospital</td><td>Unlicensed clinic files a claim</td><td><span class="pill p-red">Proof fails</span> not on the approved list</td></tr>
+      <tr><td>⌛ Expired policy</td><td>Claim dated after the policy expired</td><td><span class="pill p-red">Proof fails</span> expiry check</td></tr>
+      <tr><td>💸 Over limit</td><td>₹6L claim on a ₹5L policy</td><td><span class="pill p-red">Proof fails</span> limit check</td></tr>
+      <tr><td>✂️ Split claim</td><td>Three ₹2L claims on a ₹5L policy</td><td><span class="pill p-red">3rd rejected</span> limit already used</td></tr>
+      <tr><td>🚫 Uncovered procedure</td><td>Cosmetic surgery on a basic plan</td><td><span class="pill p-red">Proof fails</span> not in covered list</td></tr>
+      <tr><td>👻 Fake patient</td><td>Hospital files without the patient's signature</td><td><span class="pill p-red">Proof fails</span> no consent signature</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- THREAT MODEL -->
+<section>
+  <div class="kicker">Threat model</div>
+  <h2>What lives where</h2>
+  <div class="tbl">
+    <table>
+      <tr><th>Data</th><th>Where</th><th>Who can see it</th></tr>
+      <tr><td>Medical records (FHIR)</td><td>IPFS, AES-encrypted</td><td>The patient, plus doctors they've granted access to</td></tr>
+      <tr><td>Record hash</td><td>On-chain</td><td>Everyone (reveals nothing)</td></tr>
+      <tr><td>Access grants and audit log</td><td>On-chain events</td><td>Everyone (pseudonymous addresses)</td></tr>
+      <tr><td>Policy details</td><td>Commitment on-chain, details held by insurer and patient</td><td>Insurer and patient</td></tr>
+      <tr><td>Diagnosis, procedure</td><td>Only inside the proof's private inputs</td><td>The hospital only</td></tr>
+      <tr><td>Payout recipient</td><td>Zcash shielded pool</td><td>The hospital only</td></tr>
+    </table>
+  </div>
+  <p class="lead" style="margin-top:16px">Known trade-off, stated openly: the insurer can see how many claims hit each policy, since it has to track the limit. Roadmap fix: hide policies in a Merkle tree and track spending through nullifiers.</p>
+</section>
+
+<!-- STACK -->
+<section>
+  <div class="kicker">Under the hood</div>
+  <h2>Tech stack</h2>
+  <div class="grid g3">
+    <div class="card"><h3>Circuits</h3><p>Noir · Barretenberg (bb.js) proving in the browser · Poseidon hashes</p></div>
+    <div class="card"><h3>Contracts</h3><p>Solidity · Foundry · Noir-generated verifier · Anvil local + Base Sepolia</p></div>
+    <div class="card"><h3>Storage</h3><p>IPFS · AES-GCM records · per-doctor key wrapping · FHIR R4 JSON</p></div>
+    <div class="card"><h3>Payments</h3><p>Zcash testnet shielded addresses · settlement relayer · ERC-5564 fallback</p></div>
+    <div class="card"><h3>Frontend</h3><p>Next.js · wagmi/viem · three role dashboards · QR consent</p></div>
+    <div class="card"><h3>Contracts list</h3><p><code>HospitalRegistry</code> · <code>PolicyRegistry</code> · <code>ClaimSettlement</code> · <code>RecordAccess</code> · <code>BreakGlass</code></p></div>
+  </div>
+</section>
+
+<!-- CHECKLIST -->
+<section>
+  <div class="kicker">Problem statement coverage</div>
+  <h2>Every requirement, mapped</h2>
+  <div class="tbl check">
+    <table>
+      <tr><th>Requirement</th><th>Kavach</th></tr>
+      <tr><td><span class="pill p-green">must</span> ZK: licensed hospital</td><td>Merkle membership + secret-key proof</td></tr>
+      <tr><td><span class="pill p-green">must</span> ZK: active policy</td><td>Policy commitment + expiry check</td></tr>
+      <tr><td><span class="pill p-green">must</span> ZK: covered procedure + limit</td><td>Covered-list Merkle proof + remaining-limit check</td></tr>
+      <tr><td><span class="pill p-green">must</span> Contract settlement + anti-replay</td><td><code>ClaimSettlement</code>: verify, nullifier, automatic payout</td></tr>
+      <tr><td><span class="pill p-green">must</span> Encrypted off-chain records, grant/revoke</td><td>Vault: IPFS + AES, hash on-chain, key wrapping</td></tr>
+      <tr><td><span class="pill p-green">must</span> Three-role UI</td><td>Vault → Seal → Blind Desk</td></tr>
+      <tr><td><span class="pill p-amber">bonus</span> Time-bound access + audit trail</td><td>Timed grants, on-chain event log</td></tr>
+      <tr><td><span class="pill p-amber">bonus</span> Break-glass</td><td>2-of-3 guardians, patient notified</td></tr>
+      <tr><td><span class="pill p-amber">bonus</span> FHIR sharing</td><td>FHIR R4 records, lab/pharmacy grants</td></tr>
+      <tr><td><span class="pill p-blue">deliverable</span> Deployed contracts</td><td>Anvil + Base Sepolia</td></tr>
+      <tr><td><span class="pill p-blue">deliverable</span> Architecture + threat model</td><td>This document + X-Ray view</td></tr>
+      <tr><td><span class="pill p-violet">extra</span> Beyond the brief</td><td>Private payout (Zcash), patient-consent signature, claim-splitting check, Attack Lab</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section>
+  <div class="kicker">Demo script, 3 minutes</div>
+  <h2>How we present it</h2>
+  <div class="step"><div class="num">0:00</div><div><h3>Hook</h3><p>"To get a claim paid today, you hand your diagnosis to a stranger. Kavach pays the claim in under a minute, and the insurer never finds out what was wrong."</p></div></div>
+  <div class="step"><div class="num">0:30</div><div><h3>Vault</h3><p>The patient grants a doctor 24-hour access, and the record decrypts on screen.</p></div></div>
+  <div class="step"><div class="num">1:00</div><div><h3>Seal</h3><p>The patient scans the QR code and the proof generates in the browser with a live timer.</p></div></div>
+  <div class="step"><div class="num">1:30</div><div><h3>Blind Desk + X-Ray</h3><p>Five green checks and the amount, paid. The split screen shows how little the insurer saw.</p></div></div>
+  <div class="step"><div class="num">2:00</div><div><h3>The leak reveal</h3><p>"A proof alone still leaks the diagnosis through the payment." Show the Zcash shielded payout.</p></div></div>
+  <div class="step"><div class="num">2:30</div><div><h3>Attack Lab</h3><p>Click through the attacks; each one fails in red. Finish on the closing line.</p></div></div>
+</section>
+
+<section style="border-bottom:none">
+  <blockquote>"Hiding the diagnosis in the proof isn’t enough if the payment leaks it. Kavach hides it everywhere."<small>Kavach. Insurers pay, diagnoses stay sealed.</small></blockquote>
+</section>
+
+</main>
+<footer><div class="wrap">Kavach · Hackasol 5.0 · W3-01 Privacy-Preserving Health Records &amp; ZKP Insurance Claims</div></footer>
+</body>
+</html>
