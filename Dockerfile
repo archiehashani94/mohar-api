@@ -12,6 +12,7 @@ COPY . .
 RUN pnpm install --no-frozen-lockfile --ignore-scripts
 ENV CHAIN_ID=84532
 ENV RPC_URL=https://sepolia.base.org
+# Role keys are baked in (testnet-only throwaway keys — rotate after the demo). No env var needed.
+ENV ROLE_KEYS=/app/deploy-keys.json
 # Render injects $PORT; the server reads process.env.PORT (defaults to 8787).
-# ROLE_KEYS_B64 = base64 of the keys JSON array (base64 avoids bracket/quote mangling in env vars).
-CMD ["sh","-c","echo \"$ROLE_KEYS_B64\" | base64 -d > /tmp/keys.json && ROLE_KEYS=/tmp/keys.json exec tsx /app/server/src/index.ts"]
+CMD ["sh","-c","exec tsx /app/server/src/index.ts"]
