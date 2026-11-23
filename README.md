@@ -1,6 +1,6 @@
 <div align="center">
 
-# Kavach · कवच
+# Mohar · मोहर
 
 ### Insurers pay. Diagnoses stay sealed.
 
@@ -22,11 +22,28 @@ every claim, and can unlock an emergency card through 2-of-3 guardians.
 
 ## Why
 
-To get a cashless claim paid today, a hospital sends the insurer the diagnosis, prescriptions and itemised bills,
-and someone reads them by hand. That is a privacy risk, it is slow, and it is open to fraud.
+**Mohar** (मोहर) means two things in Hindi/Urdu: an official **seal** that certifies a document, and a gold **coin**.
+That's the product: a seal that proves a claim is valid, and the money that moves because of it.
 
-Hiding the diagnosis inside a ZK proof isn't enough on its own. If the contract then pays the public wallet of an
-oncology, IVF or HIV clinic, **the payment itself reveals the diagnosis**. Kavach hides the hospital inside a Merkle set
+To get a cashless claim paid today, a hospital sends the insurer the patient's full file: diagnosis, prescriptions,
+itemised bills. Claims desks, third-party administrators and reviewers read it by hand, and it is stored in claims
+databases forever. That causes three problems:
+
+- **Privacy.** A cancer, HIV, IVF or psychiatric diagnosis is seen by strangers and sits in databases that leak. In
+  September 2024, names, medical reports and claims of roughly 31 million policyholders of one of India's largest
+  health insurers were reportedly leaked online.
+- **Speed.** Every claim waits for a human to read documents and send queries back, while the patient waits at discharge.
+- **Fraud.** Despite all that reading, an estimated ₹8,000–10,000 crore a year is lost to claim fraud, waste and abuse
+  (BCG × Medi Assist, 2025).
+
+Mohar replaces the documents with a **zero-knowledge seal**. The hospital proves the claim follows every rule of the
+policy, and the insurer's smart contract checks that proof and pays automatically. The rules are: licensed hospital,
+active policy, covered treatment, within the limit, never claimed before, the patient agreed, and the payout can't be
+redirected. The insurer learns the amount and that the claim is valid, nothing else. Reading a file isn't needed to
+catch fraud, because a fraudulent claim can't produce a valid seal in the first place.
+
+Hiding the diagnosis inside a proof isn't enough on its own. If the contract then pays the public wallet of an
+oncology, IVF or HIV clinic, **the payment itself reveals the diagnosis**. Mohar hides the hospital inside a Merkle set
 of all licensed hospitals, pays a **fresh one-time address** (or a Zcash shielded address) per claim, and submits
 through a **relayer**, so not even the transaction sender identifies the hospital.
 
@@ -46,17 +63,43 @@ Anon Aadhaar onboarding uses proofs generated once per patient (snarkjs takes ab
 node sdk/scripts/aadhaar-prove.mjs <patient-wallet-address>
 ```
 
+### Presenting: Live demo with role sign-in
+
+**Live demo** opens a sign-in screen with every party as a real wallet on the chain: 2 patients, 4 hospitals, the
+insurer, a doctor, a lab, a pharmacy, the regulator, a paramedic and 3 guardians. Signing in signs a fresh challenge
+with that wallet. Each **browser tab keeps its own role**, so you can put Patient, Hospital and Insurer side by side.
+Each role sees only its own app, and the others are locked out.
+
+- The **Demo guide** panel (right) lists the whole workflow in 11 steps. It ticks each one from live chain state and
+  tells you which role to sign in as next.
+- **Under the hood** (same panel) logs every real operation as it happens: encryption, IPFS pins, transactions with
+  block and gas, proof size and time. Each entry is tagged *stays on device*, *leaves encrypted* or *public*.
+- **QR codes are real:** the hospital scans the patient's Mohar card at admission, the paramedic scans the
+  lock-screen emergency QR, and the patient scans the UIDAI test-mode Aadhaar QR. Each uses the camera, a photo
+  upload, or a one-click demo shortcut.
+- **Open a role on a phone:** use the QR icon on any sign-in card or in the role menu. Phones need a secure context
+  for WebCrypto and the camera, so start with `HTTPS=1 ./scripts/demo.sh` and accept the self-signed certificate.
+- `?as=<role>` in a URL signs that tab in directly, e.g. `/?as=hospital-1#/seal`.
+
 ### Presenting: Story mode
 
-The app opens on **Story mode**: the patient's phone, the hospital desk and the insurer's screen side by side, with a
-"wire" strip showing exactly what crosses between them. Press **→** to run each step for real:
+The app opens on **Story mode**, an animated scene made for judges. It has three rooms: Asha's phone and the hospital
+(private) and the public blockchain. It opens on **"Today"**: the file being copied to four strangers. Then each press
+of **→** runs the real step and animates it. Her Aadhaar is blacked out except "18+ · Delhi". The medical file locks
+and only a locked copy is stored. Asha's phone checks the numbers and signs. The hospital's **mohar press** lights up
+7 rules and stamps a wax seal saying only "valid, ₹73,800". The seal alone crosses into public, the contract ticks its
+checks, and coins move into a one-time wallet. The insurer's lens shows the amount next to black bars. A scanner beam
+searches the whole chain: 0 private details found. Finally a fraudster replays the seal and is rejected.
+**V** switches to the detailed device view.
 
 | Key | Action |
 |---|---|
 | `→` / `Space` | run the current step, then advance |
 | `←` | previous step |
 | `1` `2` `3` | zoom patient / hospital / insurer |
+| `V` | scene view ↔ detailed device view |
 | `X` | x-ray: tag every field private or public |
+| `H` | show / hide *How it works* + the live *Under the hood* log for the current step |
 | `R` | restart the story |
 | `?` | show keys |
 
@@ -114,9 +157,9 @@ After the first run the app works offline: fonts are bundled and the prover's CR
 | **Patient Vault** | Anon Aadhaar identity · encrypted FHIR records · share for 1h/24h/7d · revoke = re-encrypt · on-chain audit trail · consent inbox · emergency QR + guardians |
 | **Hospital Seal** | ICD-10 smart search (73k codes, plain-language terms) · HAPI FHIR import · itemised bill · in-browser proof with live progress · Ghost Pay receivables |
 | **Insurer Blind Desk** | pool, auto-settled claims (amount + checks only), policy issuance and renewal |
-| **Doctor** | sees only records shared with them, only while access lasts; every open is logged first |
+| **Doctor · Lab · Pharmacy** | see only what a patient shares, only while access lasts; every open is logged on-chain first. The lab gets just the lab slice (Observation) and the pharmacy just the prescription slice (MedicationRequest + allergies), re-encrypted as separate records |
 | **Regulator** | ABDM HFR check → attest → approve → publish root · revoke · NMC clinicians · emergency pause |
-| **Break-glass** | responder request → 2 of 3 guardians release shares → card opens for 24 h |
+| **Paramedic · Guardians** | paramedic scans the emergency QR → 2 of 3 guardians (each signed in separately) release shares → card opens for 24 h |
 | **Attack Lab** | 15 one-click fraud attempts against the real circuit and contracts |
 | **X-Ray** | hospital's private witness next to the public chain + full-chain leak scan |
 
@@ -128,16 +171,18 @@ After the first run the app works offline: fonts are bundled and the prover's CR
 |---|---|
 | unlicensed hospital · expired policy · waiting period · uncovered procedure · excluded diagnosis · over the limit · forged patient consent | replay · lying about prior usage · inflated payout · front-run recipient · forged registry root · duplicate Aadhaar · stolen Aadhaar proof |
 
-Threat model: [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) · architecture: [`docs/architecture.png`](docs/architecture.png)
+Requirement-by-requirement checklist: [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) · threat model: [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) · architecture: [`docs/architecture.png`](docs/architecture.png)
 
 ## Tests
 
 ```bash
 cd circuits/claim && nargo test             # circuit helpers
-cd sdk && npx tsx --test test/claim.test.ts # 11 · real proof + 9 circuit-level attacks
+cd sdk && npx tsx --test test/claim.test.ts # 12 · real proof + 9 circuit-level attacks
 cd contracts && forge test                  # 31 · real UltraHonk + real Anon Aadhaar proofs, attacks, flows
 cd sdk && npx tsx scripts/leak-test.ts      # settles a claim, scans the entire chain for 16 private values
 cd e2e && node story.mjs                    # Story mode end-to-end, keyboard only
+cd e2e && node roles.mjs                    # Live demo by role sign-in: claim, sharing, revoke, break-glass, duplicate Aadhaar
+cd e2e && node smoke.mjs --flow --attacks   # every screen renders · claim settles · leak scan · 14 attacks
 cd e2e && node smoke.mjs --attacks          # every screen + all Attack Lab scenarios in Chromium
 cd e2e && node flows.mjs                    # share → audited open → revoke/re-key · break-glass · renewal
 ```

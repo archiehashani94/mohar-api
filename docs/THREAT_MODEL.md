@@ -1,4 +1,4 @@
-# Kavach — privacy threat model
+# Mohar — privacy threat model
 
 ![architecture](architecture.png)
 

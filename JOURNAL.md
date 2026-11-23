@@ -233,3 +233,64 @@ contract and searches 16 private values in every encoding (ASCII, field element,
 | CLI leak test | PASS |
 
 The demo video was **not** re-recorded (the team asked not to); `demo/kavach-demo.mp4` still shows the previous UI.
+
+---
+
+## 14. Round 3: full audit, role sign-in, QR flows, a Story that shows its work
+
+**Audit against the problem statement:** every must-have, bonus and deliverable re-tested on a fresh chain. See
+`docs/REQUIREMENTS.md` for the mapping and results. The only open item is still the Base Sepolia deploy (needs a
+funded key).
+
+**Bugs found:**
+- `demo.sh` only killed old anvil processes. An API server from an earlier run kept port 8787 (`EADDRINUSE`), so the
+  fresh stack talked to a stale relayer and every claim and attack timed out. It now frees 8787 and 5173 first.
+- **Anon Aadhaar "not working":** (1) the cached proofs live in gitignored `.cache/`, so a fresh clone got "no
+  proof". The API now falls back to the identical real proofs in `contracts/test/fixtures/`. (2) The demo has one
+  UIDAI test Aadhaar (Asha's). Verifying Rahul first silently claimed it, and then *Asha* was blocked with
+  `DuplicateAadhaar`. Rahul's screen is now explicitly the "one Aadhaar, two accounts" attack and warns if Asha
+  isn't verified yet.
+- Wallet nonces drifted when the same role was used from two tabs. The signer now resets and retries on nonce errors.
+
+**Built:**
+- **Role sign-in** (`lib/session.ts`, `pages/Login.tsx`): 16 identities, a SIWE-style challenge signed by the role's
+  wallet, one role per tab (sessionStorage), role-guarded screens, a quick-switch menu, `?as=` deep links, and a
+  sign-in QR per role for phones. `HTTPS=1` gives a self-signed TLS cert because phones need it for WebCrypto and
+  the camera.
+- **Real QR flows** (`components/Qr.tsx`, jsQR): the hospital scans the patient's Kavach card, the paramedic scans
+  the emergency QR, and the patient scans the UIDAI test Aadhaar QR (rendered as a downloadable card). Each works
+  with the camera, a photo upload or a demo shortcut.
+- **Lab + pharmacy** as real accounts (Anvil now runs with 12 accounts). They get minimum-necessary FHIR slices that
+  are re-encrypted as separate records. A test confirms the pharmacy can't see the diagnosis.
+- **Paramedic and Guardians** are separate roles. Each guardian signs in and releases their own share.
+- **Under the hood** (`lib/trace.ts`, `components/Activity.tsx`): every crypto, IPFS, ZK and chain operation is
+  logged live with tx hash, block, gas and sizes, and tagged *stays on device*, *leaves encrypted* or *public*.
+- **Story mode** now shows a *How it works* column and the live log for each step (`H` toggles them).
+- **Demo guide**: 11 cross-role steps, ticked from live chain state, each with a "sign in as …" button.
+
+**Verification:** forge 31/31 · SDK 12/12 · nargo 2/2 · `roles.mjs` 16/16 + guide 11/11 · `story.mjs` 10/10 ·
+`smoke.mjs --flow` (0 leaks) · `--attacks` 14/14 · `zcash.mjs` · CLI leak test PASS. `flows.mjs` was removed
+because `roles.mjs` covers it through the role UI.
+
+## 15. Round 4: Mohar, and a Story judges can watch
+
+**Renamed Kavach → Mohar** (मोहर: an official seal, and a gold coin). The zero-knowledge proof is literally a seal
+that certifies a claim, and the coin is the payout it triggers. New logo: a wax seal with a redaction bar. The UI,
+docs, diagrams and pitch PDF (`pitch/Mohar-pitch.pdf`) are rebranded. Internal identifiers (`@kavach/sdk`, storage
+keys, contract names) are unchanged on purpose.
+
+**Scene view (`app/src/components/Scene.tsx`, framer-motion), now the default Story view:** one fixed 1280×520
+canvas, scaled to fit, with hand-drawn SVG people, a phone, the "mohar press", a wax seal, coins and a public ledger.
+Private rooms are violet and dashed; the public chain is teal and hatched. A new opening step, **"Today"**, shows the
+file being copied to 4 readers, plus two sourced facts (the Sept 2024 leak of ~31M policyholders' records; ₹8–10k
+crore/yr FWA, BCG × Medi Assist 2025). Every animation is driven by the real step:
+- The press pumps while the browser proves.
+- The 7 rules light up with the prover's real stages.
+- Proof time and size are the real ones.
+- Leak-scan rows come from the real chain scan.
+- The fraud card shows the real spent nullifier.
+
+Steps no longer auto-advance in scene view, so each animation can finish. `V` switches to the old device view.
+
+**Checked:** `scene.mjs` (new, screenshots every scene) · `story.mjs` (device view) 10/10 · `roles.mjs` 16/16 ·
+attacks 14/14.
