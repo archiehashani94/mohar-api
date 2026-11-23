@@ -3,6 +3,8 @@
 node_modules
 **/node_modules
 .git
+app
+e2e
 app/dist
 .logs
 .testnet-keys.json
