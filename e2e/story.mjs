@@ -19,6 +19,10 @@ async function press(n, waitFor) {
   const err = await p.locator('text=⛔').count();
   console.log('step', n, err ? 'ERROR ' + (await p.locator('text=⛔').first().textContent()) : 'ok');
 }
+// device view (V) and skip the opening "Today" scene
+await p.keyboard.press('v');
+await p.keyboard.press('ArrowRight');
+await p.waitForTimeout(800);
 await p.screenshot({ path: 'shots/story/00.png' });
 await press(1); // Begin
 await press(2, '18+ ✓'); // Anon Aadhaar on-chain

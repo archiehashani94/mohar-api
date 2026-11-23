@@ -1,4 +1,4 @@
-// Kavach API — three small jobs, none of which ever sees plaintext medical data:
+// Mohar API — three small jobs, none of which ever sees plaintext medical data:
 //   1. IPFS pin node: stores ciphertext blobs by CIDv1 (sha2-256). Optional Pinata mirror (PINATA_JWT).
 //   2. Consent inbox: hospital → patient claim-consent requests (carry ciphertext + wrapped key, never plaintext).
 //   3. Relayer: submits proofs from its own wallet so the hospital's address never touches the chain.
@@ -158,8 +158,32 @@ app.get('/api/crs/:file', async (c) => {
 
 // ---------------- Anon Aadhaar (proof made on the patient's device at onboarding, cached) ----------------
 app.get('/api/aadhaar/proof/:addr', (c) => {
-  const f = new URL(`../../.cache/anon-aadhaar/proof-${c.req.param('addr').toLowerCase()}-11651504.json`, import.meta.url).pathname;
-  return existsSync(f) ? c.json(JSON.parse(readFileSync(f, 'utf8'))) : c.json({ error: 'no proof — run sdk/scripts/aadhaar-prove.mjs <address>' }, 404);
+  const addr = c.req.param('addr').toLowerCase();
+  const f = new URL(`../../.cache/anon-aadhaar/proof-${addr}-11651504.json`, import.meta.url).pathname;
+  if (existsSync(f)) return c.json(JSON.parse(readFileSync(f, 'utf8')));
+  // Fresh clones: .cache is gitignored, but the same real proofs ship as contract-test fixtures.
+  const dir = new URL('../../contracts/test/fixtures/', import.meta.url).pathname;
+  for (const n of existsSync(dir) ? readdirSync(dir) : []) {
+    if (!n.startsWith('aadhaar-')) continue;
+    const j = JSON.parse(readFileSync(dir + n, 'utf8'));
+    if (String(j.signal).toLowerCase() === addr) return c.json(j);
+  }
+  return c.json({ error: 'no proof for this wallet — run node sdk/scripts/aadhaar-prove.mjs <address>' }, 404);
+});
+// The UIDAI *test-mode* secure QR (signed with UIDAI's published test key) — rendered as a scannable card in the app.
+app.get('/api/aadhaar/test-qr', (c) => {
+  const j = JSON.parse(readFileSync(new URL('../../sdk/assets/anon-aadhaar/dataInput.json', import.meta.url).pathname, 'utf8'));
+  return c.json({ qr: j.testQRData });
+});
+
+// LAN URLs so a phone on the same Wi-Fi can open a role by scanning a QR.
+app.get('/api/lan', async (c) => {
+  const { networkInterfaces } = await import('node:os');
+  const ips = Object.values(networkInterfaces())
+    .flat()
+    .filter((i: any) => i && i.family === 'IPv4' && !i.internal)
+    .map((i: any) => i.address);
+  return c.json({ ips, publicUrl: process.env.PUBLIC_APP_URL ?? null });
 });
 
 // ---------------- clinical data + registries ----------------

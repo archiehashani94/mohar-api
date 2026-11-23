@@ -6,12 +6,19 @@ import { c, getDemo, getProvider, Role } from '../lib/chain';
 import { api } from '../lib/zk';
 import { ring } from '../lib/keyring';
 import { hospitalProveAndSubmit, hospitalRequestConsent, policyFor, Rail } from '../lib/flow';
+import { useIdentity } from '../lib/session';
+import { QrScanner } from '../components/Qr';
+import { roleOf } from '../lib/chain';
+import { ScanLine, ShieldCheck } from 'lucide-react';
 
 type StepState = 'todo' | 'doing' | 'done' | 'fail';
 
 export function Seal() {
   const d = getDemo();
-  const [hIdx, setH] = useState(1);
+  const me = useIdentity();
+  const hIdx = me?.hospitalIdx ?? 1;
+  const [scan, setScan] = useState(false);
+  const [scanMsg, setScanMsg] = useState('');
   const [patient, setPatient] = useState<Role>('patient');
   const [diagnosis, setDiag] = useState('C50.9');
   const [diagDisplay, setDiagDisplay] = useState('Breast cancer, unspecified');
@@ -103,28 +110,30 @@ export function Seal() {
   return (
     <div className="space-y-6">
       <PageHeader
-        icon=""
-        title="Seal · hospital claim desk"
-        sub="Write the encounter, get the patient's signature, prove the claim in this browser. Nothing medical leaves this machine unencrypted."
+        title={`${hosp.name} · claim desk`}
+        sub="Write the encounter, get the patient’s signature, prove the claim in this browser. Nothing medical leaves this machine unencrypted — and this hospital never sends a transaction itself."
         right={
-          <select className="input w-auto" value={hIdx} onChange={(e) => setH(+e.target.value)}>
-            {d.hospitals.map((h, i) => (
-              <option key={h.hfrId} value={i}>
-                {h.name} · {h.specialty}
-              </option>
-            ))}
-          </select>
+          <div className="text-right text-[12px] text-muted">
+            <div className="label">ABDM HFR</div>
+            <div className="mono">{hosp.hfrId}</div>
+            <div>{hosp.city}</div>
+          </div>
         }
       />
-
       <div className="grid lg:grid-cols-5 gap-6">
         <Card className="lg:col-span-3" title="1 · Encounter" sub={`${hosp.name}, ${hosp.city} · ABDM HFR ${hosp.hfrId}`}>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Patient (insurance card scanned)">
-              <select className="input" value={patient} onChange={(e) => setPatient(e.target.value as Role)}>
-                <option value="patient">{d.names.patient} — {policyFor('patient').planName}</option>
-                <option value="patient2">{d.names.patient2} — {policyFor('patient2').planName}</option>
-              </select>
+            <Field label="Patient (scan their Mohar card)">
+              <div className="flex gap-2">
+                <select className="input" value={patient} onChange={(e) => setPatient(e.target.value as Role)}>
+                  <option value="patient">{d.names.patient} — {policyFor('patient').planName}</option>
+                  <option value="patient2">{d.names.patient2} — {policyFor('patient2').planName}</option>
+                </select>
+                <button type="button" className="btn btn-ghost !px-2.5" title="Scan patient card" onClick={() => setScan(true)}>
+                  <ScanLine size={16} />
+                </button>
+              </div>
+              {scanMsg && <div className="text-[12px] text-mint mt-1">{scanMsg}</div>}
             </Field>
             <div className="sm:col-span-1">
               <IcdPicker code={diagnosis} display={diagDisplay} onPick={(c, d) => (setDiag(c), setDiagDisplay(d))} />
@@ -170,15 +179,15 @@ export function Seal() {
               ))}
             </div>
             <div className="flex justify-between items-center mt-4 text-sm">
-              <div className="text-muted"> Total <b className="text-fg">{formatINR(total)}</b> − deductible {formatINR(policy.deductible)} − co-pay {policy.copayBps / 100}%
+              <div className="text-muted">Total <b className="text-fg">{formatINR(total)}</b> − deductible {formatINR(policy.deductible)} − co-pay {policy.copayBps / 100}%
               </div>
-              <div> Insurer pays <b className="text-mint text-lg">{formatINR(payout)}</b>
+              <div>Insurer pays <b className="text-mint text-lg">{formatINR(payout)}</b>
               </div>
             </div>
           </div>
           <div className="mt-5 flex gap-3">
             <button className="btn btn-primary" onClick={request} disabled={st('record') === 'doing'}>
-              {st('record') === 'doing' ? <Spinner /> : ''} Seal record & request consent
+              {st('record') === 'doing' ? <Spinner /> : null} Seal record & request consent
             </button>
           </div>
         </Card>
@@ -190,7 +199,7 @@ export function Seal() {
               {
                 label: 'Patient signs consent',
                 state: st('consent'),
-                detail: st('consent') === 'doing' ? <span className="text-amber">waiting for {d.names[patient]} in  Vault…</span> : signed ? 'signature received' : undefined,
+                detail: st('consent') === 'doing' ? <span className="text-amber">waiting for {d.names[patient]} to sign on their phone (sign in as the patient)…</span> : signed ? 'signature received' : undefined,
               },
               { label: 'Rebuild hospital Merkle tree, match on-chain root', state: st('tree') },
               { label: 'Compute witness (all 7 statements checked)', state: st('witness') },
@@ -203,13 +212,32 @@ export function Seal() {
             ]}
           />
           <button className="btn btn-primary w-full justify-center mt-5" disabled={!signed || proving || st('relay') === 'done'} onClick={prove}>
-            {proving ? <Spinner /> : ''} Generate proof & submit
+            {proving ? <Spinner /> : null} Generate proof & submit
           </button>
-          {err && <div className="mt-3 text-sm text-rose bg-rose/10 rounded-lg p-3"> {err}</div>}
+          {err && <div className="mt-3 text-sm text-rose bg-rose/10 rounded-lg p-3">{err}</div>}
           {result?.ok && <Settled claim={ring.get().claims.find((x) => x.id === active.id)} />}
         </Card>
       </div>
       <HapiImport onUse={(c, d) => (setDiag(c), setDiagDisplay(d))} />
+      <QrScanner
+        open={scan}
+        onClose={() => setScan(false)}
+        title="Scan the patient’s Mohar card"
+        hint="Patient → My QR codes → Mohar card. It carries the patient’s address only, so the consent request can be sealed to them."
+        demo={{ label: 'Demo: Asha’s card', value: JSON.stringify({ app: 'kavach', t: 'patient-card', patient: d.accounts.patient.address }) }}
+        onResult={(t) => {
+          try {
+            const j = JSON.parse(t);
+            const r = roleOf(j.patient);
+            if (r === 'patient' || r === 'patient2') {
+              setPatient(r);
+              setScanMsg(`Card scanned: ${d.names[r]} · ${policyFor(r).planName}`);
+            } else setScanMsg('Unknown patient');
+          } catch {
+            setScanMsg('Not a Mohar card');
+          }
+        }}
+      />
       <GhostWallets hIdx={hIdx} />
     </div>
   );
@@ -219,10 +247,10 @@ function Settled({ claim }: { claim: any }) {
   if (!claim?.pub) return null;
   return (
     <div className="mt-4 rounded-xl border border-mint/40 bg-mint/5 p-4 fade-in">
-      <div className="text-mint font-bold">✓ Settled · {formatINR(claim.pub.payoutAmount)}</div>
+      <div className="text-mint font-bold flex items-center gap-2"><ShieldCheck size={16} /> Settled · {formatINR(claim.pub.payoutAmount)}</div>
       <div className="text-xs text-muted mt-1"> paid to {claim.rail === 'zcash' ? 'the Ghost Pay bridge → Zcash shielded pool' : 'one-time address'} <Hex v={claim.pub.payoutRecipient} />
       </div>
-      <a className="text-xs text-violet mt-2 inline-block" href="#/xray"> See what the chain learned →
+      <a className="text-xs text-violet mt-2 inline-block" href="#/xray">See what the chain learned →
       </a>
     </div>
   );
@@ -240,7 +268,7 @@ function GhostWallets({ hIdx }: { hIdx: number }) {
   const gp = useAsync(() => api('/ghostpay'), [], 5000);
   if (!data?.length && !gp.data?.payouts?.length) return null;
   return (
-    <Card title=" Ghost Pay receivables" sub="Each claim paid a fresh address derived from this hospital's secret + the claim nullifier. Only this desk can link them.">
+    <Card title="Ghost Pay receivables" sub="Each claim paid a fresh address derived from this hospital's secret + the claim nullifier. Only this desk can link them.">
       <div className="space-y-2">
         {(data ?? []).map((x) => (
           <div key={x.id} className="flex justify-between text-sm border-b border-line pb-2">

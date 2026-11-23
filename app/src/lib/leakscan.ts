@@ -1,4 +1,4 @@
-// Scans every tx + event of every Kavach contract for each private value of a claim.
+// Scans every tx + event of every Mohar contract for each private value of a claim.
 import { AbiCoder, hexlify, toUtf8Bytes } from 'ethers';
 import { codeToField, formatINR, splitPubKey, toHex32 } from '@kavach/sdk';
 import { getDemo, getProvider } from './chain';

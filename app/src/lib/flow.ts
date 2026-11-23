@@ -27,6 +27,7 @@ import {
 import { c, getDemo, signerFor, Role, blockTime } from './chain';
 import { api, ipfsPut, ipfsGet, hospitalTree, claimStruct, getProver } from './zk';
 import { ring } from './keyring';
+import { kb, trace } from './trace';
 
 export type Rail = 'stealth' | 'zcash';
 
@@ -80,9 +81,11 @@ export async function hospitalRequestConsent(o: {
     date: new Date(now * 1000).toISOString().slice(0, 10),
     billItems: o.bill,
   });
+  trace({ kind: 'crypto', title: 'Built HL7 FHIR R4 encounter bundle', detail: `Patient · Encounter · Condition ${diag.code} · Procedure ${proc.code} · MedicationRequest · Observation · Claim`, vis: 'private' });
   const recordKey = await newRecordKey();
   const sealed = await sealJSON(recordKey, bundle);
   const bytes = sealedBytes(sealed);
+  trace({ kind: 'crypto', title: 'Encrypted the record (AES-256-GCM)', detail: `fresh 256-bit record key · ${kb(bytes.length)} ciphertext`, vis: 'private' });
   const cid = await ipfsPut(bytes);
   const recordHash = recordHashField(bytes, recordKey);
 
@@ -90,6 +93,7 @@ export async function hospitalRequestConsent(o: {
   const nullifier = await claimNullifier(policy, recordHash, o.procedure);
   const gp = await api('/ghostpay');
   const recipient = o.rail === 'zcash' ? gp.bridgeAddress : ghostWallet(BigInt(h.secret), nullifier).address;
+  trace({ kind: 'crypto', title: 'Derived claim nullifier + one-time payout address', detail: `nullifier = Poseidon2(policy, record, procedure) · payTo ${recipient.slice(0, 10)}… = keccak(hospitalSecret, nullifier)`, vis: 'private' });
   if (o.rail === 'zcash' && o.zcashUA) await api('/ghostpay/zcash', { nullifier: '0x' + nullifier.toString(16).padStart(64, '0'), ua: o.zcashUA });
 
   const billItems = o.bill.map((b) => b.amount);
@@ -110,7 +114,9 @@ export async function hospitalRequestConsent(o: {
   };
   const pk = await newRecordKey();
   const req = { box: await sealJSON(pk, payload), key: await wrapKey(pk, await patientPubKey(patientAddr)) };
+  trace({ kind: 'crypto', title: `Sealed consent request to ${d.names[o.patient]}`, detail: 'ECIES (secp256k1) to the patient’s registered key — the inbox server sees ciphertext only', vis: 'sealed' });
   const inboxItem = await api('/consent', { patient: patientAddr, request: req });
+  trace({ kind: 'net', title: 'Consent request delivered to patient inbox', wire: 'sealed box + wrapped key', vis: 'sealed' });
 
   const local = {
     id: inboxItem.id,
@@ -145,6 +151,14 @@ export async function patientOpenRequest(patient: Role, item: any) {
   const commitment = await policyCommitment(policy);
   const payout = computePayout(payload.bill.map((b: any) => b.amount), policy);
   const digest = await consentDigest({ policyCommitment: commitment, nullifier, claimDate: payload.claim.claimDate, payoutAmount: payout, payoutRecipient: getAddress(payload.claim.recipient) });
+  const checksT = {
+    nullifierMatches: nullifier.toString() === payload.claim.nullifier,
+    payoutMatchesPolicy: payout === payload.claim.payoutAmount,
+  };
+  if (!(patientOpenRequest as any).seen?.has(item.id)) {
+    ((patientOpenRequest as any).seen ??= new Set()).add(item.id);
+    trace({ kind: 'crypto', title: 'Phone decrypted & re-derived the claim', detail: `payout ₹${(payout / 100).toLocaleString('en-IN')} ${checksT.payoutMatchesPolicy ? '✓' : '✗'} · claim ID ${checksT.nullifierMatches ? '✓' : '✗'} · recomputed from the patient’s own policy copy`, vis: 'private' });
+  }
   const checks = {
     recordMatchesCid: true,
     nullifierMatches: nullifier.toString() === payload.claim.nullifier,
@@ -168,7 +182,9 @@ export async function patientApprove(patient: Role, item: any) {
   }
   ring.update((r) => (r.recordKeys[recordId] = hexlify(recordKey)));
   const signature = signConsent(consentKeyFor(priv, policyFor(patient).policyId).privateKey, digest);
+  trace({ kind: 'crypto', title: 'Signed consent with per-policy key', detail: `digest binds amount + payout address + nullifier · sig ${String(signature).slice(0, 14)}…`, vis: 'private' });
   await api(`/consent/${item.id}`, { signature, recordId });
+  trace({ kind: 'net', title: 'Signature sent to the hospital', wire: '64-byte signature', vis: 'sealed' });
   return { recordId, signature };
 }
 
@@ -189,16 +205,22 @@ export async function hospitalProve(localId: string, onStep: (s: string, extra?:
   onStep('witness');
   const { input, pub } = await buildWitnessInput(draft, { secret: BigInt(h.secret), tree }, inbox.signature);
   const prover = await getProver();
+  const tw = performance.now();
   await prover.witness(input); // all 7 statements checked here; throws with the failing one
+  trace({ kind: 'zk', title: 'Witness solved — all 7 statements hold', detail: `licensed (Merkle) · policy active · covered & not excluded · payout ≤ limit · unique nullifier · patient signature · recipient bound · ${(performance.now() - tw).toFixed(0)} ms`, vis: 'private' });
   onStep('prove');
   const proof = await prover.prove(input);
+  trace({ kind: 'zk', title: 'UltraHonk proof generated in this browser', detail: `bb.js WASM · 45,596 gates · ${(proof.proveMs / 1000).toFixed(2)} s · ${kb(proof.proof.length)}`, vis: 'private' });
   onStep('proved', proof);
   return { proof, claim: claimStruct(pub) };
 }
 
 export async function hospitalSubmit(localId: string, proof: { proof: Uint8Array; proveMs: number }, claim: any) {
   const local = ring.get().claims.find((x) => x.id === localId);
+  trace({ kind: 'net', title: 'Proof + 7 public inputs sent to the relayer', detail: `amount ₹${(Number(claim.payoutAmount) / 100).toLocaleString('en-IN')} · policy commitment · nullifier · hospital root · date · used-before · recipient`, wire: `${kb(proof.proof.length)} proof + 7 numbers`, vis: 'public' });
   const res = await api('/relay/claim', { proof: hexlify(proof.proof), claim, meta: { rail: local.rail } });
+  if (res.ok) trace({ kind: 'chain', where: 'relayer', title: 'tx ClaimSettlement.submitClaim — verified & paid', detail: `HonkVerifier ✓ · nullifier marked used · bINR → one-time ${String(claim.payoutRecipient).slice(0, 10)}…`, tx: res.txHash, block: res.block, gas: Number(res.gasUsed), vis: 'public' });
+  else trace({ kind: 'fail', where: 'relayer', title: 'Claim rejected on-chain', detail: res.reason });
   ring.update((r) => {
     const x = r.claims.find((y) => y.id === localId);
     Object.assign(x, { status: res.ok ? 'settled' : 'rejected', result: res, pub: claim, proveMs: proof.proveMs, proofBytes: proof.proof.length });
@@ -226,12 +248,15 @@ export async function openRecord(viewer: Role, recordId: string, purpose: string
     key = getBytes(hex);
   } else {
     await (await v.logAccess(recordId, purpose)).wait(); // reverts if no access → audit trail of every view
+    trace({ kind: 'chain', title: 'Access written to the on-chain audit trail first', detail: `purpose “${purpose}” — HealthVault reverts if the grant is revoked or expired`, vis: 'public' });
     const g = await v.getGrant(recordId, me);
     key = await unwrapKey(JSON.parse(new TextDecoder().decode(getBytes(g.wrappedKey))), getDemo().accounts[viewer].privateKey);
   }
   const bytes = await ipfsGet(rec.cid);
   if (keccak256(bytes) !== rec.contentHash) throw new Error('IPFS content does not match on-chain hash');
-  return openJSON(key, JSON.parse(new TextDecoder().decode(bytes)));
+  const doc = await openJSON(key, JSON.parse(new TextDecoder().decode(bytes)));
+  trace({ kind: 'crypto', title: 'Decrypted record on this device', detail: 'ciphertext hash matched the on-chain content hash · AES-GCM opened locally', vis: 'private' });
+  return doc;
 }
 
 export async function shareRecord(owner: Role, recordId: string, grantee: string, role: number, hours: number) {
@@ -239,7 +264,25 @@ export async function shareRecord(owner: Role, recordId: string, grantee: string
   if (!hex) throw new Error('record key not on this device');
   const w = await wrapKey(getBytes(hex), await patientPubKey(grantee));
   const exp = (await blockTime()) + hours * 3600;
+  trace({ kind: 'crypto', title: 'Wrapped the record key to the grantee', detail: 'ECIES to their registered public key — only they can unwrap it', vis: 'sealed' });
   await (await c(owner).vault.grantAccess(recordId, grantee, role, exp, toUtf8Bytes(JSON.stringify(w)))).wait();
+}
+
+/** Minimum-necessary sharing: re-encrypt only some FHIR resource types (e.g. prescriptions for a pharmacy)
+ *  as a new record the patient owns, then grant that. The full record never leaves the patient. */
+export async function shareSlice(owner: Role, recordId: string, grantee: string, role: number, hours: number, types: string[], kind: string) {
+  const doc: any = await openRecord(owner, recordId, 'owner');
+  const slice = { ...doc, entry: (doc.entry ?? []).filter((e: any) => types.includes(e.resource?.resourceType)) };
+  trace({ kind: 'crypto', title: `Cut a ${kind} slice of the record`, detail: `kept ${slice.entry.length} of ${(doc.entry ?? []).length} FHIR resources (${types.join(', ')})`, vis: 'private' });
+  const key = await newRecordKey();
+  const bytes = sealedBytes(await sealJSON(key, slice));
+  const cid = await ipfsPut(bytes);
+  const me = getDemo().accounts[owner].address;
+  const newId = keccak256(toUtf8Bytes(`${me}:${kind}:${cid}`));
+  await (await c(owner).vault.registerRecord(newId, keccak256(bytes), cid, kind)).wait();
+  ring.update((r) => (r.recordKeys[newId] = hexlify(key)));
+  await shareRecord(owner, newId, grantee, role, hours);
+  return newId;
 }
 
 export async function revokeAndRekey(owner: Role, recordId: string, grantee: string) {
@@ -275,8 +318,10 @@ export async function verifyAadhaar(patient: Role) {
   const pr = await api(`/aadhaar/proof/${getDemo().accounts[patient].address}`);
   if (pr.error) throw new Error(pr.error);
   const t0 = performance.now();
+  trace({ kind: 'id', title: 'Loaded Anon Aadhaar Groth16 proof', detail: `made on-device at onboarding (snarkjs, ${pr.proveMs ? (pr.proveMs / 1000).toFixed(0) + ' s' : '~1.5–4 min'}) · binds this wallet as the signal · reveals age ≥ 18 + state only`, vis: 'private' });
   const tx = await c(patient).patients.verifyWithAadhaar(pr.nullifierSeed, pr.nullifier, pr.timestamp, pr.revealArray, pr.groth16Proof);
   const rc = await tx.wait();
+  trace({ kind: 'ok', title: 'Groth16 proof verified on-chain', detail: `PatientRegistry stored the app-scoped nullifier → this Aadhaar can never back a second account · ${Number(rc.gasUsed).toLocaleString()} gas`, vis: 'public' });
   return { proof: pr, gas: Number(rc.gasUsed), ms: performance.now() - t0, tx: tx.hash, state: decodeReveal(pr.revealArray[3]) };
 }
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy Kavach to Base Sepolia (chain 84532) and seed it.
+# Deploy Mohar to Base Sepolia (chain 84532) and seed it.
 #   DEPLOYER_KEY=0x… ./scripts/deploy-testnet.sh
 # Needs ~0.05 Base Sepolia ETH on the deployer (faucets: https://docs.base.org/chain/network-faucets).
 set -euo pipefail
@@ -8,7 +8,7 @@ export RPC_URL="${RPC_URL:-https://sepolia.base.org}" CHAIN_ID=84532
 : "${DEPLOYER_KEY:?set DEPLOYER_KEY to a funded Base Sepolia key}"
 KEYS="$ROOT/.testnet-keys.json"
 if [ ! -f "$KEYS" ]; then
-  node -e "const {Wallet}=require('$ROOT/sdk/node_modules/ethers');console.log(JSON.stringify(Array.from({length:10},()=>Wallet.createRandom().privateKey)))" > "$KEYS"
+  node -e "const {Wallet}=require('$ROOT/sdk/node_modules/ethers');console.log(JSON.stringify(Array.from({length:12},()=>Wallet.createRandom().privateKey)))" > "$KEYS"
   chmod 600 "$KEYS"
 fi
 export ROLE_KEYS="$KEYS"

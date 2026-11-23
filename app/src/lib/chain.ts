@@ -1,5 +1,6 @@
 import { Contract, JsonRpcProvider, Wallet, NonceManager, Interface } from 'ethers';
 import abi from '../abi.json';
+import { patchTrace, trace } from './trace';
 
 export type Role =
   | 'regulator'
@@ -11,7 +12,9 @@ export type Role =
   | 'guardian1'
   | 'guardian2'
   | 'guardian3'
-  | 'responder';
+  | 'responder'
+  | 'lab'
+  | 'pharmacy';
 
 export interface Demo {
   rpc: string;
@@ -39,8 +42,70 @@ export async function loadDemo(): Promise<Demo> {
 export const getDemo = () => demo;
 export const getProvider = () => provider;
 
+const CONTRACT_NAMES: Record<string, string> = {};
+const fnIface = () => {
+  if (!(fnIface as any).i) {
+    const d = demo.deployment;
+    const map: [string, string][] = [
+      [d.token, 'BINR'],
+      [d.regulator, 'Regulator'],
+      [d.claimSettlement, 'ClaimSettlement'],
+      [d.healthVault, 'HealthVault'],
+      [d.breakGlass, 'BreakGlass'],
+      [d.patientRegistry, 'PatientRegistry'],
+    ];
+    for (const [a, n] of map) if (a) CONTRACT_NAMES[a.toLowerCase()] = n;
+    (fnIface as any).i = Object.fromEntries(map.map(([, n]) => [n, new Interface((abi as any)[n] ?? [])]));
+  }
+  return (fnIface as any).i as Record<string, Interface>;
+};
+
+/** Decode "Contract.method" for the activity log. */
+export function describeCall(to?: string | null, data?: string) {
+  if (!to) return 'deploy';
+  const ifs = fnIface();
+  const name = CONTRACT_NAMES[to.toLowerCase()] ?? 'contract';
+  try {
+    const f = ifs[name]?.parseTransaction({ data: data ?? '0x' });
+    return `${name}.${f?.name ?? '?'}`;
+  } catch {
+    return name;
+  }
+}
+
+/** A NonceManager that (1) reports every tx to the activity log and (2) recovers from nonce drift
+ *  when the same wallet is used from two tabs (role sign-in makes that common). */
+class TracedSigner extends NonceManager {
+  constructor(private role: Role, w: Wallet) {
+    super(w);
+  }
+  async sendTransaction(tx: any): Promise<any> {
+    const what = describeCall(tx.to, tx.data);
+    let sent: any;
+    try {
+      sent = await super.sendTransaction(tx);
+    } catch (e: any) {
+      const m = String(e?.message ?? e);
+      if (!/nonce|NONCE_EXPIRED|replacement/i.test(m)) {
+        trace({ kind: 'fail', title: `${what} reverted`, detail: revertReason(e), where: 'chain' });
+        throw e;
+      }
+      this.reset();
+      sent = await super.sendTransaction(tx);
+    }
+    const ev = trace({ kind: 'chain', title: `tx ${what}`, detail: `from ${demo.names[this.role] ?? this.role}`, tx: sent.hash, vis: 'public' });
+    const wait = sent.wait.bind(sent);
+    sent.wait = async (...a: any[]) => {
+      const rc = await wait(...a);
+      patchTrace(ev.id, { block: rc?.blockNumber, gas: Number(rc?.gasUsed ?? 0) });
+      return rc;
+    };
+    return sent;
+  }
+}
+
 export function signerFor(role: Role) {
-  if (!signers.has(role)) signers.set(role, new NonceManager(new Wallet(demo.accounts[role].privateKey, provider)));
+  if (!signers.has(role)) signers.set(role, new TracedSigner(role, new Wallet(demo.accounts[role].privateKey, provider)));
   return signers.get(role)!;
 }
 
