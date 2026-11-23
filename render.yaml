@@ -1,0 +1,17 @@
+# Render blueprint for the Mohar/Kavach API (Docker). Free plan (sleeps when idle).
+# The Docker image bundles the runtime artifacts (deployment addresses, ABIs, IPFS blobs).
+# Set ROLE_KEYS_JSON in the Render dashboard as a secret (the relayer/role keys JSON array).
+services:
+  - type: web
+    name: mohar-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: CHAIN_ID
+        value: "84532"
+      - key: RPC_URL
+        value: https://sepolia.base.org
+      - key: ROLE_KEYS_JSON
+        sync: false

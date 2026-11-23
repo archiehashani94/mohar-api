@@ -1,0 +1,16 @@
+# Keep the image lean but KEEP the gitignored runtime artifacts the API needs
+# (contracts/deployments, contracts/out, server/data, .cache/icd10, sdk/assets).
+node_modules
+**/node_modules
+.git
+app/dist
+.logs
+.testnet-keys.json
+.cache/anon-aadhaar/circuit_final.zkey
+circuits/*/target
+contracts/cache
+contracts/broadcast
+e2e/shots
+e2e/videos
+pitch
+docs
