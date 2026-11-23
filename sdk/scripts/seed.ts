@@ -129,7 +129,7 @@ console.log('· clinicians (NMC)');
 // Anon Aadhaar onboarding happens live in the app (Story step 1) — see PatientRegistry.
 
 console.log('· encryption keys');
-for (const r of ['patient', 'patient2', 'doctor', 'guardian1', 'guardian2', 'guardian3', 'responder'] as const) {
+for (const r of ['patient', 'patient2', 'doctor', 'guardian1', 'guardian2', 'guardian3', 'responder', 'lab', 'pharmacy'] as const) {
   const c = contracts(signer(r, p));
   await (await c.vault.registerKey(wallet(r).signingKey.publicKey)).wait();
 }
@@ -198,6 +198,8 @@ const demo = {
     guardian2: 'Dr. Kavita Rao (family doctor)',
     guardian3: 'Neha Verma (sister)',
     responder: 'CG 108 Ambulance Paramedic',
+    lab: 'Raipur Diagnostics Lab',
+    pharmacy: 'Jan Aushadhi Pharmacy',
   },
   hospitals,
   shadyClinic: { name: 'Shady Clinic (unlicensed)', secret: toHex32(shadySecret) },
