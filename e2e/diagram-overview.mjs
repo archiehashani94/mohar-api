@@ -5,7 +5,7 @@ import { Diagram, C } from './diagram-lib.mjs';
 const d = new Diagram(2420, 1470);
 const OUT = new URL('../docs/diagrams/', import.meta.url).pathname;
 
-d.text(60, 28, 'Kavach — what happens when Asha makes a health-insurance claim', { size: 64, font: 'title' });
+d.text(60, 28, 'Mohar — what happens when Asha makes a health-insurance claim', { size: 64, font: 'title' });
 d.text(62, 108, 'The simple version. Follow the numbers 1 → 7. Purple = Asha (patient) · Teal = hospital · Yellow = the blockchain "robot judge" · Blue = insurer', { size: 24, color: C.muted });
 
 function card(n, x, y, title, body, fill, stroke, w = 520, h = 300) {
@@ -52,7 +52,7 @@ extra(830, '# 🚑 Emergency (Asha is unconscious)', "A paramedic scans the QR o
 extra(1600, '# 🛑 Cheaters get caught (14 / 14)', "Fake hospital? Expired policy? Claiming twice?\nChanging the amount? Splitting a big bill?\nSigning for the patient? Re-using someone\nelse's Aadhaar? → the proof can't even be made,\nor the robot judge rejects it. Live, every time.", C.yellowBg, C.yellow);
 
 d.text(1210, 1320, 'Hiding the diagnosis in a proof isn’t enough if the payment leaks it.', { size: 34, align: 'center', font: 'title' });
-d.text(1210, 1370, 'Kavach hides it everywhere.', { size: 44, align: 'center', font: 'title', color: C.violet });
+d.text(1210, 1370, 'Mohar hides it everywhere.', { size: 44, align: 'center', font: 'title', color: C.violet });
 
 writeFileSync(OUT + '1-overview.excalidraw', JSON.stringify(d.toExcalidraw(), null, 1));
 await d.renderPng(OUT + '1-overview.png', new URL('./', import.meta.url).pathname);

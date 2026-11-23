@@ -13,8 +13,9 @@ const errors = [];
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 page.on('pageerror', (e) => errors.push(String(e)));
 
-for (const p of ['story', 'vault', 'seal', 'desk', 'doctor', 'regulator', 'emergency', 'attack', 'xray']) {
-  await page.goto(`${BASE}/#/${p}`);
+const AS = { login: '', vault: 'patient', seal: 'hospital-1', desk: 'insurer', provider: 'doctor', regulator: 'regulator', responder: 'responder', guardian: 'guardian1' };
+for (const p of ['story', 'login', 'vault', 'seal', 'desk', 'provider', 'regulator', 'responder', 'guardian', 'attack', 'xray']) {
+  await page.goto(`${BASE}/${AS[p] ? '?as=' + AS[p] : ''}#/${p}`);
   await page.waitForTimeout(2500);
   await page.screenshot({ path: `${OUT}${p}.png`, fullPage: true });
   console.log('page', p, 'ok');
@@ -22,13 +23,13 @@ for (const p of ['story', 'vault', 'seal', 'desk', 'doctor', 'regulator', 'emerg
 
 if (process.argv.includes('--flow')) {
   const t0 = Date.now();
-  await page.goto(`${BASE}/#/seal`);
+  await page.goto(`${BASE}/?as=hospital-1#/seal`);
   await page.getByRole('button', { name: /Seal record & request consent/ }).click();
   await page.getByText(/waiting for/).waitFor({ timeout: 30000 });
   console.log('consent requested');
   const vault = await ctx.newPage();
   vault.on('pageerror', (e) => errors.push('vault: ' + e));
-  await vault.goto(`${BASE}/#/vault`);
+  await vault.goto(`${BASE}/?as=patient#/vault`);
   await vault.getByRole('button', { name: /Approve & sign/ }).click({ timeout: 30000 });
   await vault.getByText('No pending requests').waitFor({ timeout: 60000 });
   console.log('patient signed');
@@ -37,7 +38,7 @@ if (process.argv.includes('--flow')) {
   await btn.waitFor();
   await page.waitForFunction(() => !document.querySelector('button:disabled')?.textContent?.includes('Generate proof'), null, { timeout: 30000 });
   await btn.click();
-  await page.getByText(/✓ Settled/).waitFor({ timeout: 120000 });
+  await page.getByText(/Settled ·/).waitFor({ timeout: 120000 });
   console.log('settled in', ((Date.now() - t0) / 1000).toFixed(1), 's');
   await page.screenshot({ path: `${OUT}seal-settled.png`, fullPage: true });
   await page.goto(`${BASE}/#/xray`);

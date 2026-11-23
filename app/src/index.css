@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* Kavach design system — "medical record meets declassified file".
+/* Mohar design system — "medical record meets declassified file".
    Light paper for trust & projector legibility; ink redaction bars; one semantic colour per idea:
    violet = private, teal = public/on-chain, green = verified, vermilion = blocked.
    Attack Lab & X-Ray switch to the dark "lab" scheme via .lab. */

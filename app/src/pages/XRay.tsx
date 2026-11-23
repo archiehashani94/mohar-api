@@ -171,7 +171,7 @@ export function XRay() {
 
       <Card
         title="Leak scan"
-        sub="Reads every transaction and event emitted by the Kavach contracts and searches for each private value (as text, as a field element, as uint256)."
+        sub="Reads every transaction and event emitted by the Mohar contracts and searches for each private value (as text, as a field element, as uint256)."
         right={
           <button className="btn btn-primary" onClick={runScan} disabled={busy}>
             {busy ? <Spinner /> : ''} Scan the chain

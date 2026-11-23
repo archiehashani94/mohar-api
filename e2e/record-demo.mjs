@@ -163,7 +163,7 @@ await hide();
 
 await p.goto(`${BASE}/#/story`);
 await p.waitForTimeout(1200);
-await caption('Kavach — insurers pay, diagnoses stay sealed.', 'Hiding the diagnosis in the proof isn’t enough if the payment leaks it. Kavach hides it everywhere.', 5500);
+await caption('Mohar — insurers pay, diagnoses stay sealed.', 'Hiding the diagnosis in the proof isn’t enough if the payment leaks it. Mohar hides it everywhere.', 5500);
 
 await ctx.close();
 await browser.close();

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { formatINR, newPolicy, policyCommitment, policyToJSON, toHex32, randomField, consentKeyFor } from '@kavach/sdk';
 import { PageHeader } from '../App';
 import { Card, Check, Chip, Empty, Hex, Spinner, Stat, useAsync } from '../components/ui';
@@ -8,6 +8,11 @@ import { ring } from '../lib/keyring';
 export function BlindDesk() {
   const d = getDemo();
   const me = d.accounts.insurer.address;
+  useEffect(() => {
+    try {
+      localStorage.setItem('kavach.insurerSeen', '1');
+    } catch {}
+  }, []);
   const { data } = useAsync(
     async () => {
       const k = c();
@@ -46,7 +51,7 @@ export function BlindDesk() {
       </div>
 
       <Card title="Settled claims" sub="This is everything the insurer — or anyone reading the chain — learns about a claim.">
-        {!data?.rows.length && <Empty>No claims yet. Settle one from  Seal.</Empty>}
+        {!data?.rows.length && <Empty>No claims yet. A hospital settles one by proof — nothing to review by hand.</Empty>}
         <div className="space-y-3">
           {(data?.rows ?? []).map(({ e, at, gas, from }) => (
             <div key={e.transactionHash} className="rounded-xl border border-line p-4 fade-in">

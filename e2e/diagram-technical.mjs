@@ -5,12 +5,12 @@ import { Diagram, C } from './diagram-lib.mjs';
 const d = new Diagram(3320, 2560);
 const OUT = new URL('../docs/diagrams/', import.meta.url).pathname;
 
-d.text(40, 24, 'Kavach — full technical flow (exactly what happens, where, and how)', { size: 60, font: 'title' });
+d.text(40, 24, 'Mohar — full technical flow (exactly what happens, where, and how)', { size: 60, font: 'title' });
 d.text(42, 98, 'Lanes = where code runs.  Solid arrows = data/tx flow, numbered in order.  Purple = private (never leaves unencrypted) · Teal = off-chain service (sees ciphertext only) · Yellow = on-chain (public)', { size: 22, color: C.muted });
 
 const LX = [40, 690, 1370, 1980, 2730];
 const LW = [610, 640, 570, 710, 560];
-const LT = ['📱 Patient device (Vault)', '🏥 Hospital browser (Seal)', '☁ Kavach API (Node/Hono)', '⛓ EVM chain (Anvil → Base Sepolia)', '🏦 Insurer · ⚖ Regulator'];
+const LT = ['📱 Patient device (Vault)', '🏥 Hospital browser (Seal)', '☁ Mohar API (Node/Hono)', '⛓ EVM chain (Anvil → Base Sepolia)', '🏦 Insurer · ⚖ Regulator'];
 const LS = [C.violet, C.violet, C.teal, C.yellow, C.blue];
 const LB = [C.violetBg, C.violetBg, C.tealBg, C.yellowBg, C.blueBg];
 const TOP = 150, BOT = 2030;
@@ -41,7 +41,7 @@ const pol = step(4, 530, 270, '0b  Policy (Insurer)', 'C = Poseidon2(D_POL, poli
 const polC = step(3, 530, 200, 'ClaimSettlement.sol (state)', 'policies[C] = {insurer, active,\n  issuedAt, used}\npool[insurer]  (bINR, paise)\nnullifierUsed[N]', { fill: C.yellowBg });
 d.arrow(pol.x - 4, pol.y + 110, polC.r + 4, polC.y + 110, { stroke: C.blue, label: 'tx', size: 18 });
 
-const ck = step(0, 260, 200, '0c  Keys on the phone', 'wallet key (pays gas, owns records)\nconsentKey = keccak(personal_sign(\n  "Kavach consent key v1\\n\n   policy <id>"))  → never on-chain\npolicy JSON + salt (from insurer)', { fill: C.violetBg });
+const ck = step(0, 260, 200, '0c  Keys on the phone', 'wallet key (pays gas, owns records)\nconsentKey = keccak(personal_sign(\n  "Mohar consent key v1\\n\n   policy <id>"))  → never on-chain\npolicy JSON + salt (from insurer)', { fill: C.violetBg });
 
 // ---------------- 1 · Anon Aadhaar
 const aa = step(0, 500, 230, '1  Anon Aadhaar (on device)', 'Aadhaar Secure QR, RSA-2048 signed\n  by UIDAI (test key in demo)\nsnarkjs Groth16 · ~1M constraints\n  (~1.5–4 min, made once)\nsignal = wallet · seed = app id\nreveals only: age ≥ 18, state', { fill: C.violetBg });
@@ -77,7 +77,7 @@ const gp = step(2, 1760, 250, '6  Ghost Pay', 'stealth rail (default, trustless)
 d.arrow(set.x - 4, set.b - 30, gp.r + 4, gp.y + 60, { stroke: C.green, label: '⑥ bINR → R', labelAt: [1900, set.b + 10], size: 18 });
 const bd = step(4, 1290, 260, '6  Blind Desk reads events', 'ClaimSettled → payout, C, N, R\n\nNOT visible: diagnosis, procedure,\nbill, hospital, patient, policy\nterms. No human approval.', { fill: C.blueBg });
 d.arrow(set.r + 4, set.y + 120, bd.x - 4, bd.y + 120, { stroke: C.yellow, label: '⑥', size: 18 });
-const ls = step(4, 1590, 250, '7  Leak scan', 'getLogs(all Kavach contracts)\n+ calldata of every tx\nsearch 13 secrets as ASCII,\n  field element, uint256\n→ 0 matches', { fill: C.greenBg, stroke: C.green });
+const ls = step(4, 1590, 250, '7  Leak scan', 'getLogs(all Mohar contracts)\n+ calldata of every tx\nsearch 13 secrets as ASCII,\n  field element, uint256\n→ 0 matches', { fill: C.greenBg, stroke: C.green });
 d.arrow(ls.x - 4, ls.cy, set.r + 4, set.b - 120, { stroke: C.green, dashed: true, label: '⑦ read all', labelAt: [2610, ls.cy + 40], size: 18 });
 
 // ---------------- bottom panels

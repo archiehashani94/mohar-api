@@ -5,6 +5,7 @@ import '@fontsource-variable/newsreader/opsz.css';
 import './index.css';
 import { App } from './App';
 import { loadDemo } from './lib/chain';
+import { initSession } from './lib/session';
 
 // Serve bb.js's CRS from our own API (cached locally) instead of Aztec's CDN → proving works offline / on bad Wi-Fi.
 const realFetch = window.fetch.bind(window);
@@ -15,6 +16,7 @@ window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
 };
 
 loadDemo()
+  .then(() => initSession())
   .then(() => createRoot(document.getElementById('root')!).render(<App />))
   .catch((e) => {
     document.getElementById('root')!.innerHTML = `<pre style="color:#ff5470;padding:24px">Could not load demo.json — run the seed script first.\n${e}</pre>`;
