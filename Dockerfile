@@ -13,4 +13,5 @@ RUN pnpm install --no-frozen-lockfile --ignore-scripts
 ENV CHAIN_ID=84532
 ENV RPC_URL=https://sepolia.base.org
 # Render injects $PORT; the server reads process.env.PORT (defaults to 8787).
-CMD ["sh","-c","printf '%s' \"$ROLE_KEYS_JSON\" > /tmp/keys.json && ROLE_KEYS=/tmp/keys.json exec tsx /app/server/src/index.ts"]
+# ROLE_KEYS_B64 = base64 of the keys JSON array (base64 avoids bracket/quote mangling in env vars).
+CMD ["sh","-c","echo \"$ROLE_KEYS_B64\" | base64 -d > /tmp/keys.json && ROLE_KEYS=/tmp/keys.json exec tsx /app/server/src/index.ts"]
