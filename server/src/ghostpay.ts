@@ -14,6 +14,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import type { JsonRpcProvider } from 'ethers';
 
 const run = promisify(execFile);
@@ -34,9 +35,9 @@ const payouts: ZPayout[] = [];
 // Demo FX: 1 ZEC ≈ ₹4,000 → 1 paise = 25 zatoshi (configurable)
 const ZAT_PER_PAISE = Number(process.env.ZAT_PER_PAISE ?? 25);
 
-const cli = process.env.ZINGO_CLI ?? new URL('../../.zcash-tools/bin/zingo-cli', import.meta.url).pathname;
+const cli = process.env.ZINGO_CLI ?? fileURLToPath(new URL('../../.zcash-tools/bin/zingo-cli', import.meta.url));
 const server = process.env.ZCASH_LIGHTWALLETD ?? 'https://testnet.zec.rocks:443';
-const walletDir = process.env.ZCASH_WALLET_DIR ?? new URL('../data/zcash-wallet', import.meta.url).pathname;
+const walletDir = process.env.ZCASH_WALLET_DIR ?? fileURLToPath(new URL('../data/zcash-wallet', import.meta.url));
 
 export const zcashReady = () => existsSync(cli);
 

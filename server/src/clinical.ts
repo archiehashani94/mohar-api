@@ -1,5 +1,6 @@
 // Clinical data services: ICD-10 smart search, HAPI FHIR import, licensing-registry checks.
 import { readFileSync, existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import {
   lookupFacilitySnapshot,
   lookupClinicianSnapshot,
@@ -12,7 +13,7 @@ import {
 // ---------------- ICD-10 (71k codes, offline) ----------------
 type Icd = { code: string; desc: string; cat: string; l: string };
 let ICD: Icd[] = [];
-const csv = new URL('../../.cache/icd10/codes.csv', import.meta.url).pathname;
+const csv = fileURLToPath(new URL('../../.cache/icd10/codes.csv', import.meta.url));
 function parseCsvLine(line: string): string[] {
   const out: string[] = [];
   let cur = '';

@@ -136,7 +136,7 @@ app.get('/api/relay/log', (c) => c.json(relayLog.map(({ proof, ...r }) => ({ ...
 app.get('/api/relay/last', (c) => c.json(relayLog.at(-1) ?? null));
 
 // ---------------- CRS mirror: bb.js trusted-setup points served locally so proving works offline ----------------
-const CRS_DIR = new URL('../../.cache/crs/', import.meta.url).pathname;
+const CRS_DIR = fileURLToPath(new URL('../../.cache/crs/', import.meta.url));
 mkdirSync(CRS_DIR, { recursive: true });
 app.get('/api/crs/:file', async (c) => {
   const file = c.req.param('file');
@@ -159,10 +159,10 @@ app.get('/api/crs/:file', async (c) => {
 // ---------------- Anon Aadhaar (proof made on the patient's device at onboarding, cached) ----------------
 app.get('/api/aadhaar/proof/:addr', (c) => {
   const addr = c.req.param('addr').toLowerCase();
-  const f = new URL(`../../.cache/anon-aadhaar/proof-${addr}-11651504.json`, import.meta.url).pathname;
+  const f = fileURLToPath(new URL(`../../.cache/anon-aadhaar/proof-${addr}-11651504.json`, import.meta.url));
   if (existsSync(f)) return c.json(JSON.parse(readFileSync(f, 'utf8')));
   // Fresh clones: .cache is gitignored, but the same real proofs ship as contract-test fixtures.
-  const dir = new URL('../../contracts/test/fixtures/', import.meta.url).pathname;
+  const dir = fileURLToPath(new URL('../../contracts/test/fixtures/', import.meta.url));
   for (const n of existsSync(dir) ? readdirSync(dir) : []) {
     if (!n.startsWith('aadhaar-')) continue;
     const j = JSON.parse(readFileSync(dir + n, 'utf8'));
@@ -172,7 +172,7 @@ app.get('/api/aadhaar/proof/:addr', (c) => {
 });
 // The UIDAI *test-mode* secure QR (signed with UIDAI's published test key) — rendered as a scannable card in the app.
 app.get('/api/aadhaar/test-qr', (c) => {
-  const j = JSON.parse(readFileSync(new URL('../../sdk/assets/anon-aadhaar/dataInput.json', import.meta.url).pathname, 'utf8'));
+  const j = JSON.parse(readFileSync(fileURLToPath(new URL('../../sdk/assets/anon-aadhaar/dataInput.json', import.meta.url)), 'utf8'));
   return c.json({ qr: j.testQRData });
 });
 

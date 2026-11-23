@@ -1,6 +1,7 @@
 // Copies contract ABIs + circuit artifact into the app.
 import { readFileSync, writeFileSync, copyFileSync } from 'node:fs';
-const root = new URL('../../', import.meta.url).pathname;
+import { fileURLToPath } from 'node:url';
+const root = fileURLToPath(new URL('../../', import.meta.url));
 const names = ['BINR', 'Regulator', 'ClaimSettlement', 'HealthVault', 'BreakGlass', 'HonkVerifier', 'PatientRegistry'];
 const out = Object.fromEntries(names.map((n) => [n, JSON.parse(readFileSync(`${root}contracts/out/${n}.sol/${n}.json`, 'utf8')).abi]));
 writeFileSync(`${root}app/src/abi.json`, JSON.stringify(out));

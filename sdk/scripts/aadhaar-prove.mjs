@@ -3,7 +3,8 @@
 //   node scripts/aadhaar-prove.mjs <walletAddress> [nullifierSeed]
 import { init, prove, verify, generateArgs, ArtifactsOrigin, packGroth16Proof } from '@anon-aadhaar/core';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-const root = new URL('../../', import.meta.url).pathname;
+import { fileURLToPath } from 'node:url';
+const root = fileURLToPath(new URL('../../', import.meta.url));
 const A = root + '.cache/anon-aadhaar/';
 const signal = process.argv[2];
 const seed = process.argv[3] ?? '11651504'; // 0xB1C8B0 — Kavach's app-scoped nullifier seed
